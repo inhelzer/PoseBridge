@@ -114,13 +114,4 @@ The camera preview is mirrored. Unity's **Mirror X** setting controls mirroring 
 
 Save scene changes outside Play mode so that they persist.
 
-## Development and versioned downloads
-
-Continue development on `main`. A published release should use a version tag such as `v1.0` to identify a specific snapshot. Later pushes to `main` do not change that snapshot.
-
-For a project page that stays fixed while development continues, publish GitHub Pages from a separate `gh-pages` branch. Link its download button to a specific release, not to the current `main` archive or a moving `latest` link. Keep the page's video in that branch or reference a pinned version.
-
-Local Python environments, Unity-generated caches, and editor-specific files should not be included in a release. Keep Unity's `Assets` (including `.meta` files), `Packages`, and `ProjectSettings`.
-
-If creating a standalone Unity build later, first configure its build scenes: the current build settings list `SampleScene`, while the pose demonstration is in `01`.
 
