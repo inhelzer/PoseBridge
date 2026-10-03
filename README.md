@@ -1,107 +1,126 @@
-# PoseBridge — הקמה מחדש במק
+# PoseBridge
 
-החבילה כוללת את הגרסה האחרונה שעבדה בשיחה:
-אתר באנגלית, בחירת מצלמה אחת מתוך המצלמות הזמינות, MediaPipe ב־Worker רגיל,
-גישור WebSocket → UDP, הפעלה בלחיצה כפולה ב־Safari ושלושה סקריפטים ליוניטי 2D.
-החבילה אינה מכילה את סצנת Unity שנמחקה.
+Camera-based body tracking for Unity 2D. A browser page detects body landmarks with MediaPipe, and a local Python bridge sends them to Unity.
 
-## 1. התקנת הגישור — פעם אחת
+The repository includes the Unity project, scenes, prefabs, scripts, camera page, bridge, macOS launcher, and a demonstration video. No separate Unity package is required to open this project.
 
-חלצי את החבילה. השאירי את כל תיקיית PoseBridge יחד.
-צריך Python 3.10 ומעלה. לבדיקה: python3 --version.
-ב־Terminal הקלידי cd ואחריו רווח, גררי את תיקיית PoseBridge ולחצי Enter.
-הריצי כל פקודה בנפרד:
+## Requirements
+
+- Unity Hub and Unity **6000.3.6f1** (the version recorded in the project).
+- Python **3.10 or newer**, available as `python3`.
+- A camera accessible to the browser: built-in camera, USB webcam, or iPhone via macOS Continuity Camera.
+- Internet access when loading the camera page and MediaPipe resources.
+
+The double-click launcher is for **macOS** and opens **Safari**. Unity and the bridge run on the same computer. This setup targets the Unity Editor or a desktop application, not Unity WebGL.
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `PoseProject/` | Unity project: Assets, Packages, and ProjectSettings |
+| `PoseProject/Assets/Scenes/01.unity` | Scene containing the pose receiver, stick figure, and demo objects |
+| `PoseProject/Assets/Scenes/SampleScene.unity` | Basic scene with camera and lighting |
+| `PoseProject/Assets/Scripts/` | Tracking, stick figure, and demo gameplay scripts |
+| `web/` | Camera selection, preview, and MediaPipe tracking |
+| `bridge.py` | Local HTTP server and WebSocket-to-UDP bridge |
+| `requirements.txt` | Python dependencies |
+| `Start-PoseBridge.command` | macOS launcher |
+| `video/mediaPipe1.mp4` | Demonstration video |
+
+## First-time setup on macOS
+
+Download and extract a published release, or clone this repository. Keep the project folders and launcher together.
+
+Open Terminal in the repository folder. You can type `cd ` (with a space), drag the folder into Terminal, and press Enter.
+
+Check Python:
+
+```bash
+python3 --version
+```
+
+Create a local Python environment and install dependencies:
 
 ```bash
 python3 -m venv .venv
-```
-
-```bash
 .venv/bin/python -m pip install -r requirements.txt
-```
-
-```bash
 chmod +x Start-PoseBridge.command
 ```
 
-## 2. הפעלה בכל פעם
+Create this environment on each computer. A copied `.venv` from another computer is not a portable installation.
 
-לחצי פעמיים על Start-PoseBridge.command בתוך PoseBridge.
-הוא מפעיל את bridge.py, מחכה לעמוד ופותח Safari.
-השאירי את הטרמינל פתוח. העמוד: http://127.0.0.1:8000
+In Unity Hub, choose **Add project from disk** (or **Open**) and select the **PoseProject** folder inside the repository. Open it with Unity 6000.3.6f1 and allow the initial import to finish.
 
-לחצי Refresh cameras, אשרי מצלמה, בחרי Camera ולחצי Start camera.
-אפשר לעבור בין מצלמות גם בזמן זיהוי. בכל רגע רק אחת שולחת נתונים ליוניטי.
-לאייפון: Continuity Camera מופעל, המכשיר זמין למק, FaceTime סגור.
-המצלמה צריכה לראות את הגוף; למבט צד אפשר למקם אותה בצד השחקן.
-הדף והמודל דורשים חיבור לאינטרנט בעת הטעינה.
+In Unity's Project window, open **Assets → Scenes → 01**. You do not need to create a new Unity project or rebuild the stick figure.
 
-אם הפורט תפוס, עצרי את הגישור הקודם ב־Control+C ונסי שוב.
-לסיום: עצרי Play ביוניטי, לחצי Stop בדף ו־Control+C בטרמינל.
+## Start a session
 
-## 3. פרויקט Unity
+1. Double-click `Start-PoseBridge.command`.
+2. Leave its Terminal window open. Safari opens at http://127.0.0.1:8000.
+3. Click **Refresh cameras** and allow camera access.
+4. Select a camera and click **Start camera**.
+5. Open the `01` scene in Unity and enter **Play** mode.
+6. Keep the Safari page visible beside Unity while tracking.
 
-צרי פרויקט 2D חדש. גררי את שלושת הקבצים מתוך Unity לתיקיית Assets:
+Only one camera is tracked at a time. Selecting another camera switches the input sent to Unity.
 
-| סקריפט | תפקיד |
-|---|---|
-| PoseReceiver.cs | קליטת כל 33 המפרקים; כולל enum בשם Joint |
-| MoveWithJoint.cs | תנועה של עיגול לפי מפרק |
-| StickFigureManager.cs | יצירת קווים וחישוב צוואר באמצע הכתפיים |
+For a side view, place the camera beside the player while the player faces the computer.
 
-צרי Empty GameObject בשם BodyInput והוסיפי לו PoseReceiver.
-השאירי Port = 5052, Mirror X מסומן ו־Minimum Visibility = 0.5.
-התיקון כבר כלול: הסינון משתמש ב־visibility ואינו חוסם נקודות בגלל presence חסר.
+### iPhone camera
 
-## 4. עיגולי המפרקים
+Enable Continuity Camera on the iPhone and make it available to the Mac. Close FaceTime or other applications using the camera. If it is missing, connect it by USB and click **Refresh cameras** again.
 
-צרי Circle דרך GameObject → 2D Object → Sprites → Circle.
-הקטיני אותו, למשל Scale = (0.15, 0.15, 1), והוסיפי MoveWithJoint.
-גררי את BodyInput לשדה Body. שכפלי ל־13 עיגולים והגדירי:
+This project's launcher uses Safari, which worked with the iPhone camera in the development setup. Availability still depends on the Mac, iPhone, permissions, and operating system setup.
 
-| שם האובייקט | Joint ב־MoveWithJoint | השדה במנהל |
-|---|---|---|
-| jointNose | Nose | Nose |
-| jointLShoulder | LeftShoulder | Left Shoulder |
-| jointRShoulder | RightShoulder | Right Shoulder |
-| jointLElbow | LeftElbow | Left Elbow |
-| jointRElbow | RightElbow | Right Elbow |
-| jointLWrist | LeftWrist | Left Wrist |
-| jointRWrist | RightWrist | Right Wrist |
-| jointLHip | LeftHip | Left Hip |
-| jointRHip | RightHip | Right Hip |
-| jointLKnee | LeftKnee | Left Knee |
-| jointRKnee | RightKnee | Right Knee |
-| jointLHeel | LeftHeel | Left Heel |
-| jointRHeel | RightHeel | Right Heel |
+## Stop a session
 
-ב־Inspector יוניטי עשוי להציג שמות עם רווח, למשל Left Shoulder.
-Left/Right הם צדדי הגוף של השחקן.
-בכל העיגולים הגדירי Z = 0, Center = (0,0), Movement Size = (10,6).
-Smoothing = 15 הוא ערך ההתחלה.
-שמרי את אותן הגדרות אזור תנועה ומרכז לכל המפרקים.
+1. Exit Play mode in Unity.
+2. Click **Stop** on the camera page.
+3. Press **Control+C** in the launcher Terminal window to stop the bridge.
 
-## 5. הקווים
+Start the next session by double-clicking the launcher again. The Python setup is only needed once per local installation.
 
-צרי Empty GameObject בשם StickFigure והוסיפי StickFigureManager.
-גררי את 13 העיגולים לשדות המתאימים, פעם אחת לכל מפרק.
-צרי Material דרך Create → Material ובחרי Shader: Sprites/Default.
-השאירי את צבע החומר לבן וגררי אותו לשדה Line Material.
-Line Width = 0.08, Sorting Order = -1, Line Z = 0.
-העיגולים ב־Sorting Layer Default ו־Order in Layer = 0.
+## Tracking scripts
 
-ב־Play נוצרים 13 קווים ו־Neck ריק, מחושב באמצע בין הכתפיים.
-ממנו יוצא קו יחיד לאף. אין צורך ב־JointLine או בחיבור ידני של קווים.
-אפשר לשנות צבע ועובי במנהל בזמן Play; שמרי ערכים רצויים גם מחוץ ל־Play.
+| Script | Role |
+| --- | --- |
+| `PoseReceiver.cs` | Receives all 33 pose landmarks over UDP |
+| `MoveWithJoint.cs` | Moves a Unity object using a selected landmark |
+| `StickFigureManager.cs` | Connects assigned joints with lines and calculates the neck between the shoulders |
 
-## 6. בדיקה ושמירה
+The project also includes scripts for the demo gameplay.
 
-השאירי את Safari גלוי לצד יוניטי והפעילי Play.
-ב־BodyInput: Receiving מציין קבלת נתונים, Tracking מציין זיהוי גוף,
-Right Wrist מציג את מיקום היד כשאיכות הזיהוי מספיקה.
-אם נקודה לא מזוהה מספיק טוב, העיגול נשאר במיקומו האחרון.
-אין בחבילה כיווץ רוחב או הטיה מלאכותית של הדמות.
+When adapting the figure, assign each joint's `MoveWithJoint` component to the pose receiver, then assign the joint transforms once in `StickFigureManager`. Keep the same movement area and center settings across the joints.
 
-שמרי את הסצנה עם Command+S מחוץ ל־Play.
-X נע מ־0 בשמאל ל־1 בימין; Y נע מ־0 למטה ל־1 למעלה.
-זו קליטה ליוניטי Editor או אפליקציית Desktop באותו מחשב, לא Unity WebGL.
+The neck is calculated from the midpoint of the shoulders. A single line connects it to the nose; no extra detected landmark is needed.
+
+The camera preview is mirrored. Unity's **Mirror X** setting controls mirroring of the Unity coordinates independently.
+
+## Connection and troubleshooting
+
+| Connection | Address |
+| --- | --- |
+| Camera page | `http://127.0.0.1:8000` |
+| Browser → bridge | `ws://127.0.0.1:8765` |
+| Bridge → Unity | UDP `127.0.0.1:5052` |
+
+- **Unity does not move:** confirm Play mode is active in the `01` scene, the camera page is tracking, and the pose receiver uses port `5052`.
+- **Receiving is off:** check that the bridge is running and the page reports a bridge connection.
+- **Receiving is on but Tracking is off:** move into the camera frame and check lighting and landmark visibility.
+- **A joint stops moving:** a landmark below the receiver's visibility threshold retains its last accepted position.
+- **Port already in use:** stop the previous bridge with Control+C before launching another copy.
+- **Python environment missing:** run the first-time setup from the repository folder.
+- **Terminal mentions Chrome:** this is an older message in the bridge; the launcher opens Safari.
+
+Save scene changes outside Play mode so that they persist.
+
+## Development and versioned downloads
+
+Continue development on `main`. A published release should use a version tag such as `v1.0` to identify a specific snapshot. Later pushes to `main` do not change that snapshot.
+
+For a project page that stays fixed while development continues, publish GitHub Pages from a separate `gh-pages` branch. Link its download button to a specific release, not to the current `main` archive or a moving `latest` link. Keep the page's video in that branch or reference a pinned version.
+
+Local Python environments, Unity-generated caches, and editor-specific files should not be included in a release. Keep Unity's `Assets` (including `.meta` files), `Packages`, and `ProjectSettings`.
+
+If creating a standalone Unity build later, first configure its build scenes: the current build settings list `SampleScene`, while the pose demonstration is in `01`.
+
