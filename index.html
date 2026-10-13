@@ -1,63 +1,37 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PoseBridge</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 60px auto;
-      padding: 0 24px;
-      background: #151b26;
-      color: white;
-      line-height: 1.6;
-    }
-    video {
-      width: 100%;
-      display: block;
-      margin: 32px 0;
-      border-radius: 12px;
-      background: black;
-    }
-    .download {
-      display: inline-block;
-      padding: 14px 24px;
-      border-radius: 8px;
-      background: #73edbb;
-      color: #151b26;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    a { color: #73edbb; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PoseBridge — Body & Hand Tracking</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:900px;margin:60px auto;padding:0 24px;background:#151b26;color:white;line-height:1.6}
+video{width:100%;display:block;margin:32px 0;border-radius:12px;background:black}
+.download{display:inline-block;padding:14px 24px;border-radius:8px;background:#73edbb;color:#151b26;text-decoration:none;font-weight:bold}
+a{color:#73edbb}
+table{width:100%;border-collapse:collapse;margin:24px 0}
+th,td{text-align:left;padding:12px;border-bottom:1px solid #384252}
+</style>
 </head>
 <body>
-  <h1>PoseBridge</h1>
-  <p>Camera-based body tracking for Unity 2D.</p>
-
-  <video controls playsinline preload="metadata">
-    <source src="./video/mediaPipe1.mp4" type="video/mp4">
-    Your browser does not support embedded video.
-  </video>
-
-  <a class="download"
-     href="https://github.com/inhelzer/PoseBridge/releases/download/v1.0/PoseBridge-1.0.zip">
-    Download PoseBridge v1.0
-  </a>
-
-  <p>
-    Includes the Unity project, camera page and local bridge.<br>
-    Unity 6000.3.6f1 · Python 3.10+ · macOS launcher
-  </p>
-
-  <p>Installation instructions are included in the downloaded README.</p>
-
-  <p>
-    <a href="https://github.com/inhelzer/PoseBridge">
-      View the project on GitHub
-    </a>
-  </p>
+<h1>PoseBridge</h1>
+<p>Camera-based body and single-hand tracking for Unity 2D.</p>
+<video controls playsinline preload="metadata">
+<source src="./video/mediaPipe1.mp4" type="video/mp4">
+Your browser does not support embedded video.
+</video>
+<a class="download" href="https://github.com/inhelzer/PoseBridge/releases/download/v1.1/PoseBridge-1.1.zip">Download PoseBridge v1.1</a>
+<p>Includes two Unity scenes, one camera page with a Body / Hand selector, and a local bridge.</p>
+<table>
+<thead><tr><th>Tracking mode</th><th>Unity scene</th></tr></thead>
+<tbody><tr><td>Body</td><td>body — body tracking and stick figure</td></tr>
+<tr><td>Hand</td><td>hand — 21 landmarks of one hand</td></tr></tbody>
+</table>
+<p>Choose a mode on the local camera page and open the matching scene in Unity.</p>
+<p>Unity 6000.3.6f1 · Python 3.10+ · macOS launcher opens Safari</p>
+<p>First-time installation and session instructions are included in the downloaded README.</p>
+<p>The video demonstrates body tracking. The download includes both tracking modes.</p>
+<p><a href="https://github.com/inhelzer/PoseBridge">View the project on GitHub</a>
+ · <a href="https://github.com/inhelzer/PoseBridge/releases/tag/v1.1">Release notes</a></p>
 </body>
 </html>
