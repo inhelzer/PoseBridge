@@ -9,6 +9,8 @@ const stopButton = document.querySelector("#stop");
 const cameraSelect = document.querySelector("#camera");
 const refreshButton = document.querySelector("#refresh");
 const cameraStatus = document.querySelector("#cameras");
+const modeSelect = document.querySelector("#mode");
+const handLinks = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
 const links = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[27,29],[29,31],[27,31],[24,26],[26,28],[28,30],[30,32],[28,32]];
 let socket, worker, stream, running = false, busy = false;
 let generation = 0, lastSent = 0, lastVideoTime = -1;
@@ -51,14 +53,14 @@ connect();
 
 function send(joints, timestamp = performance.now()) {
   if (socket?.readyState === WebSocket.OPEN && socket.bufferedAmount < 16000) {
-    socket.send(JSON.stringify({ tracked: joints.length === 33, timestamp, joints }));
+    socket.send(JSON.stringify({ kind: modeSelect.value, tracked: joints.length === (modeSelect.value === "hand" ? 21 : 33), timestamp, joints }));
   }
 }
 
 function draw(joints) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = "#73edbb"; ctx.lineWidth = 3;
-  for (const [a,b] of links) {
+  for (const [a,b] of (modeSelect.value === "hand" ? handLinks : links)) {
     if (!joints[a] || !joints[b] || joints[a].visibility < .5 || joints[b].visibility < .5) continue;
     ctx.beginPath(); ctx.moveTo(joints[a].x * canvas.width, joints[a].y * canvas.height);
     ctx.lineTo(joints[b].x * canvas.width, joints[b].y * canvas.height); ctx.stroke();
@@ -68,10 +70,11 @@ function draw(joints) {
     if (p.visibility < .5) continue;
     ctx.beginPath(); ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, Math.PI * 2); ctx.fill();
   }
-  const p = joints[16];
+  const isHand = modeSelect.value === "hand";
+  const p = joints[isHand ? 0 : 16];
   values.textContent = p
-    ? `RightWrist (Unity mirror coordinates):\nx: ${(1-p.x).toFixed(3)}\ny: ${(1-p.y).toFixed(3)}\nvisibility: ${p.visibility.toFixed(3)}`
-    : "No body detected";
+    ? `${isHand ? "Wrist" : "RightWrist"} (Unity mirror coordinates):\nx: ${(1-p.x).toFixed(3)}\ny: ${(1-p.y).toFixed(3)}\nvisibility: ${p.visibility.toFixed(3)}`
+    : `No ${isHand ? "hand" : "body"} detected`;
 }
 
 function stop() {
@@ -113,7 +116,7 @@ async function start() {
   startButton.disabled = true;
   stopButton.disabled = false;
   cameraSelect.disabled = true; refreshButton.disabled = true;
-  modelStatus.textContent = "Loading camera and pose model…";
+  modelStatus.textContent = `Loading camera and ${modeSelect.value} model…`;
   try {
     const newStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -135,7 +138,7 @@ async function start() {
     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
     await refreshCameras(false, track.getSettings().deviceId || selectedId);
     if (generation !== currentGeneration) return;
-    worker = new Worker("./pose-worker.js?v=3");
+    worker = new Worker(modeSelect.value === "hand" ? "./hand-worker.js?v=1" : "./pose-worker.js?v=3");
     worker.onmessage = ({ data }) => {
       if (generation !== currentGeneration) return;
       if (data.type === "ready") {
@@ -161,6 +164,17 @@ async function start() {
     stop(); modelStatus.textContent = `Could not start camera: ${error.message}. Check permissions, close other camera apps, or refresh and select another camera.`;
   }
 }
+let previousMode = modeSelect.value;
+modeSelect.onchange = () => {
+  // Clear the previous receiver before changing the outgoing packet type.
+  const nextMode = modeSelect.value;
+  modeSelect.value = previousMode;
+  stop();
+  modeSelect.value = nextMode;
+  previousMode = nextMode;
+  draw([]);
+  modelStatus.textContent = `Selected ${nextMode}. Open the matching Unity scene and click Start camera.`;
+};
 startButton.onclick = start;
 stopButton.onclick = () => { stop(); modelStatus.textContent = "Camera stopped."; };
 cameraSelect.onchange = () => { if (running) void start(); };

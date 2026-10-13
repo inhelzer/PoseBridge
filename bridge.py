@@ -11,6 +11,7 @@ from websockets.asyncio.server import serve
 
 ROOT = Path(__file__).resolve().parent / "web"
 UDP_TARGET = ("127.0.0.1", 5052)
+HAND_TARGET = ("127.0.0.1", 5053)
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -35,22 +36,27 @@ async def main():
                     packet = json.loads(message)
                     if not isinstance(packet, dict) or not isinstance(packet.get("joints"), list):
                         continue
-                    if len(packet["joints"]) not in (0, 33):
+                    kind = packet.get("kind", "body")
+                    if kind not in ("body", "hand"):
                         continue
-                    udp.sendto(message.encode("utf-8"), UDP_TARGET)
+                    expected = 21 if kind == "hand" else 33
+                    if len(packet["joints"]) not in (0, expected):
+                        continue
+                    udp.sendto(message.encode("utf-8"), HAND_TARGET if kind == "hand" else UDP_TARGET)
                 except (ValueError, OSError):
                     continue
         finally:
             # Immediately invalidate the last pose when the page disconnects.
             udp.sendto(b'{"tracked":false,"joints":[]}', UDP_TARGET)
+            udp.sendto(b'{"tracked":false,"joints":[]}', HAND_TARGET)
             print("Camera page disconnected", flush=True)
 
     try:
         async with serve(relay, "127.0.0.1", 8765,
                          origins=["http://127.0.0.1:8000", "http://localhost:8000"],
                          max_size=32000, max_queue=1, compression=None):
-            print("Open http://127.0.0.1:8000 in Chrome", flush=True)
-            print("Unity receives UDP on port 5052. Stop with Ctrl+C.", flush=True)
+            print("Open http://127.0.0.1:8000 in Safari", flush=True)
+            print("Unity receives body UDP on 5052 and hand UDP on 5053. Stop with Ctrl+C.", flush=True)
             await asyncio.Future()
     finally:
         http.shutdown()
