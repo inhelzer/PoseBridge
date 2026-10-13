@@ -1,117 +1,116 @@
-# PoseBridge
+# PoseBridge v1.1
 
-Camera-based body tracking for Unity 2D. A browser page detects body landmarks with MediaPipe, and a local Python bridge sends them to Unity.
+Camera-based **body and single-hand tracking for Unity 2D**.
 
-The repository includes the Unity project, scenes, prefabs, scripts, camera page, bridge, macOS launcher, and a demonstration video. No separate Unity package is required to open this project.
+The project includes two ready-to-open Unity scenes and one camera page with a **Body / Hand** selector. Track one mode at a time and open the matching scene in Unity.
 
 ## Requirements
 
-- Unity Hub and Unity **6000.3.6f1** (the version recorded in the project).
+- Unity Hub and Unity **6000.3.6f1**.
 - Python **3.10 or newer**, available as `python3`.
-- A camera accessible to the browser: built-in camera, USB webcam, or iPhone via macOS Continuity Camera.
-- Internet access when loading the camera page and MediaPipe resources.
+- A camera accessible to Safari: built-in camera, USB webcam, or iPhone via Continuity Camera.
+- Internet access to load the MediaPipe library and models.
 
-The double-click launcher is for **macOS** and opens **Safari**. Unity and the bridge run on the same computer. This setup targets the Unity Editor or a desktop application, not Unity WebGL.
+The launcher is for **macOS** and opens **Safari**. Unity and the Python bridge run on the same computer. This setup supports the Unity Editor / desktop, not Unity WebGL.
 
-## Repository layout
+## Included scenes
 
-| Path | Contents |
-| --- | --- |
-| `PoseProject/` | Unity project: Assets, Packages, and ProjectSettings |
-| `PoseProject/Assets/Scenes/01.unity` | Scene containing the pose receiver, stick figure, and demo objects |
-| `PoseProject/Assets/Scenes/SampleScene.unity` | Basic scene with camera and lighting |
-| `PoseProject/Assets/Scripts/` | Tracking, stick figure, and demo gameplay scripts |
-| `web/` | Camera selection, preview, and MediaPipe tracking |
-| `bridge.py` | Local HTTP server and WebSocket-to-UDP bridge |
-| `requirements.txt` | Python dependencies |
-| `Start-PoseBridge.command` | macOS launcher |
-| `video/mediaPipe1.mp4` | Demonstration video |
+| Browser selection | Unity scene | Tracking |
+| --- | --- | --- |
+| Body | `PoseProject/Assets/Scenes/body.unity` | Body landmarks and a 2D stick figure |
+| Hand | `PoseProject/Assets/Scenes/hand.unity` | 21 landmarks of one hand and its 2D skeleton |
+
+`SampleScene` is a basic scene, not the tracking demo. No separate Unity package or manual reconstruction is needed.
 
 ## First-time setup on macOS
 
-Download and extract a published release, or clone this repository. Keep the project folders and launcher together.
+Extract the release ZIP and keep its folders together.
 
-Open Terminal in the repository folder. You can type `cd ` (with a space), drag the folder into Terminal, and press Enter.
+Open Terminal in the extracted **PoseBridge** folder, beside `bridge.py` and `requirements.txt`. You can type `cd ` (with a space), drag the folder into Terminal, and press Enter.
 
-Check Python:
+Check Python, then run:
 
 ```bash
 python3 --version
-```
-
-Create a local Python environment and install dependencies:
-
-```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 chmod +x Start-PoseBridge.command
 ```
 
-Create this environment on each computer. A copied `.venv` from another computer is not a portable installation.
+Create the Python environment on each computer; do not copy another installation's `.venv`.
 
-In Unity Hub, choose **Add project from disk** (or **Open**) and select the **PoseProject** folder inside the repository. Open it with Unity 6000.3.6f1 and allow the initial import to finish.
-
-In Unity's Project window, open **Assets → Scenes → 01**. You do not need to create a new Unity project or rebuild the stick figure.
+In Unity Hub, choose **Add project from disk** / **Open** and select the **PoseProject** folder inside the extracted folder. Open with Unity 6000.3.6f1 and allow the initial import to finish.
 
 ## Start a session
 
 1. Double-click `Start-PoseBridge.command`.
-2. Leave its Terminal window open. Safari opens at http://127.0.0.1:8000.
-3. Click **Refresh cameras** and allow camera access.
-4. Select a camera and click **Start camera**.
-5. Open the `01` scene in Unity and enter **Play** mode.
-6. Keep the Safari page visible beside Unity while tracking.
+2. Leave Terminal open. Safari opens http://127.0.0.1:8000.
+3. Choose **Body** or **Hand** in the **Tracking** selector.
+4. Click **Refresh cameras**, allow camera access, and select a camera.
+5. Click **Start camera**.
+6. In Unity, open **Assets → Scenes → body** or **hand**, matching the browser selection.
+7. Enter **Play** mode. Keep Safari visible beside Unity.
 
-Only one camera is tracked at a time. Selecting another camera switches the input sent to Unity.
+For Hand mode, show **one hand**. The current version does not offer separate left/right hand selection.
 
-For a side view, place the camera beside the player while the player faces the computer.
+Changing Body / Hand stops tracking and clears the previous input. Click **Start camera** again. Exit Play before opening the matching Unity scene.
+
+You can select another camera while tracking. Only one camera is used at a time.
 
 ### iPhone camera
 
-Enable Continuity Camera on the iPhone and make it available to the Mac. Close FaceTime or other applications using the camera. If it is missing, connect it by USB and click **Refresh cameras** again.
+Enable Continuity Camera and make the iPhone available to the Mac. Close FaceTime or other apps using the camera. If it is missing, try USB and click **Refresh cameras** again.
 
-This project's launcher uses Safari, which worked with the iPhone camera in the development setup. Availability still depends on the Mac, iPhone, permissions, and operating system setup.
+To capture a body from the side while facing the computer, place the camera beside the player.
 
 ## Stop a session
 
-1. Exit Play mode in Unity.
-2. Click **Stop** on the camera page.
-3. Press **Control+C** in the launcher Terminal window to stop the bridge.
+Exit Play in Unity, click **Stop** on the camera page, then press **Control+C** in Terminal.
 
-Start the next session by double-clicking the launcher again. The Python setup is only needed once per local installation.
+Next time, double-click the launcher again. No repeated Python installation is needed.
 
-## Tracking scripts
+## Scripts
 
-| Script | Role |
-| --- | --- |
-| `PoseReceiver.cs` | Receives all 33 pose landmarks over UDP |
-| `MoveWithJoint.cs` | Moves a Unity object using a selected landmark |
-| `StickFigureManager.cs` | Connects assigned joints with lines and calculates the neck between the shoulders |
+| Body | Single hand | Role |
+| --- | --- | --- |
+| `PoseReceiver.cs` | `HandReceiver.cs` | Receive landmarks |
+| `MoveWithJoint.cs` | `MoveWithHandJoint.cs` | Move a joint object |
+| `StickFigureManager.cs` | `HandFigureManager.cs` | Connect assigned joint objects with lines |
 
-The project also includes scripts for the demo gameplay.
+The two managers are independent. Joint objects are assigned once in their matching manager. Use the same movement size and center across the joints of a figure.
 
-When adapting the figure, assign each joint's `MoveWithJoint` component to the pose receiver, then assign the joint transforms once in `StickFigureManager`. Keep the same movement area and center settings across the joints.
+The body manager calculates a neck between the shoulders. The hand manager connects the fingers and palm. Both render in 2D.
 
-The neck is calculated from the midpoint of the shoulders. A single line connects it to the nose; no extra detected landmark is needed.
+The camera preview is mirrored. The receiver's **Mirror X** setting controls Unity's coordinates separately.
 
-The camera preview is mirrored. Unity's **Mirror X** setting controls mirroring of the Unity coordinates independently.
-
-## Connection and troubleshooting
+## Connections
 
 | Connection | Address |
 | --- | --- |
 | Camera page | `http://127.0.0.1:8000` |
 | Browser → bridge | `ws://127.0.0.1:8765` |
-| Bridge → Unity | UDP `127.0.0.1:5052` |
+| Body → Unity | UDP `127.0.0.1:5052` |
+| Hand → Unity | UDP `127.0.0.1:5053` |
 
-- **Unity does not move:** confirm Play mode is active in the `01` scene, the camera page is tracking, and the pose receiver uses port `5052`.
-- **Receiving is off:** check that the bridge is running and the page reports a bridge connection.
-- **Receiving is on but Tracking is off:** move into the camera frame and check lighting and landmark visibility.
-- **A joint stops moving:** a landmark below the receiver's visibility threshold retains its last accepted position.
-- **Port already in use:** stop the previous bridge with Control+C before launching another copy.
-- **Python environment missing:** run the first-time setup from the repository folder.
-- **Terminal mentions Chrome:** this is an older message in the bridge; the launcher opens Safari.
+## Troubleshooting
 
-Save scene changes outside Play mode so that they persist.
+- **Nothing moves:** match the browser mode to the Unity scene and enter Play.
+- **Receiving is off:** check that Terminal is running and the browser reports a bridge connection. Check the matching receiver's port.
+- **Receiving is on but Tracking is off:** put the body or hand in frame and check the lighting.
+- **Port already in use:** stop the previous bridge with Control+C.
+- **Python environment missing:** run the first-time setup in the extracted project folder.
+- **Body / Hand selector missing:** refresh Safari to load the new camera page.
+- **A joint retains its position:** joint objects keep their last accepted position when tracking is lost. Hand lines can hide when tracking is lost.
 
+Save Unity changes outside Play mode.
 
+## Release and development
+
+The release ZIP includes the Unity project, camera page, bridge, launcher, dependencies list, and this README. The demonstration video stays on the project page and is omitted from the distribution ZIP.
+
+Continue development on `main`. The public project page is published separately from `gh-pages`. Its download button points to the **v1.1** release; later pushes to `main` do not update that download.
+
+Before distributing, omit local environments and generated caches. Retain Unity's **Assets** (including `.meta` files), **Packages**, and **ProjectSettings**.
+
+Project page: https://inhelzer.github.io/PoseBridge/
+Repository: https://github.com/inhelzer/PoseBridge
